@@ -88,14 +88,14 @@ def format_currency(value):
         return f"${value:.2f}"
 
 total_revenue = format_currency(data_filtered["Sales"].sum())
-total_units = f"{data_filtered['Units Sold'].sum()/1000:.1f}K"
+total_units = f"{data_filtered['Quantity'].sum()/1000:.1f}K"
 total_profit = format_currency(data_filtered["Profit"].sum())
 profit_margin = f"{(data_filtered['Profit'].sum() / data_filtered['Sales'].sum() * 100) if data_filtered['Sales'].sum() != 0 else 0:.2f}%"
 
 # Display KPIs
 kpi1, kpi2, kpi3, kpi4 = st.columns(4)
 kpi1.metric(label="Total Sales", value=total_revenue)
-kpi2.metric(label="Units Sold", value=total_units)
+kpi2.metric(label="Quantity", value=total_units)
 kpi3.metric(label="Total Profit", value=total_profit)
 kpi4.metric(label="Profit Margin", value=profit_margin)
 
@@ -107,7 +107,7 @@ st.subheader("KPI Trends Analysis")
 data_filtered['YearMonth'] = data_filtered['Order Date'].dt.to_period('M').astype(str)
 monthly_summary = data_filtered.groupby('YearMonth').agg({
     "Sales": "sum",
-    "Units Sold": "sum",
+    "Quantity": "sum",
     "Profit": "sum"
 }).reset_index()
 monthly_summary["Profit Margin"] = (monthly_summary["Profit"] / monthly_summary["Sales"]).replace([np.inf, -np.inf], 0) * 100
@@ -127,7 +127,7 @@ st.plotly_chart(fig_trend, use_container_width=True)
 st.subheader("Category Performance")
 category_summary = data_filtered.groupby("Category").agg({
     "Sales": "sum",
-    "Units Sold": "sum",
+    "Quantity": "sum",
     "Profit": "sum"
 }).reset_index()
 category_summary["Profit Margin"] = (category_summary["Profit"] / category_summary["Sales"]).replace([np.inf, -np.inf], 0) * 100
