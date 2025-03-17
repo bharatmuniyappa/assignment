@@ -55,48 +55,24 @@ if page == "📊 Sales Overview":
         
         col1, col2, col3, col4 = st.columns(4)
         with col1:
-            st.metric(label="Sales", value=f"${total_sales/1_000_000:.2f}M")
+            st.metric(label="Sales", value=f"${total_sales:,.2f}")
         with col2:
-            st.metric(label="Quantity Sold", value=f"{total_quantity/1_000:.1f}K")
+            st.metric(label="Quantity Sold", value=f"{total_quantity:,}")
         with col3:
-            st.metric(label="Profit", value=f"${total_profit/1_000:.1f}K")
+            st.metric(label="Profit", value=f"${total_profit:,.2f}")
         with col4:
             st.metric(label="Margin Rate", value=f"{margin_rate:.2f}%")
-    else:
-        st.warning("No data available for the selected filters.")
-
-elif page == "📈 Performance Analytics":
-    st.title("📈 Performance Analytics")
-    if not df_filtered.empty:
-        st.subheader("Sales Performance by Region")
-        sales_by_region = df_filtered.groupby("Region")["Sales"].sum().reset_index()
-        fig_region = px.bar(sales_by_region, x="Region", y="Sales", title="Sales by Region", color="Sales")
-        st.plotly_chart(fig_region, use_container_width=True)
-
-        st.subheader("Profitability by State")
-        profit_by_state = df_filtered.groupby("State")["Profit"].sum().reset_index()
-        fig_state = px.bar(profit_by_state, x="State", y="Profit", title="Profit by State", color="Profit")
-        st.plotly_chart(fig_state, use_container_width=True)
-    else:
-        st.warning("No data available for the selected filters.")
-
-elif page == "📌 Customer Insights":
-    st.title("📌 Customer Insights")
-    if not df_filtered.empty:
-        st.subheader("Top Customers by Sales")
-        top_customers = df_filtered.groupby("Customer Name")["Sales"].sum().reset_index().nlargest(10, "Sales")
-        fig_customers = px.bar(top_customers, x="Sales", y="Customer Name", orientation="h", color="Sales", title="Top 10 Customers by Sales")
-        st.plotly_chart(fig_customers, use_container_width=True)
-    else:
-        st.warning("No data available for the selected filters.")
-
-elif page == "📦 Product Analysis":
-    st.title("📦 Product Analysis")
-    if not df_filtered.empty:
-        st.subheader("Most Profitable Products")
-        profitable_products = df_filtered.groupby("Product Name")["Profit"].sum().reset_index().nlargest(10, "Profit")
-        fig_product = px.bar(profitable_products, x="Profit", y="Product Name", orientation="h", color="Profit", title="Top 10 Profitable Products")
-        st.plotly_chart(fig_product, use_container_width=True)
+        
+        st.subheader("Sales Trend Over Time")
+        df_filtered["MonthYear"] = df_filtered["Order Date"].dt.to_period("M").astype(str)
+        df_trend = df_filtered.groupby("MonthYear")["Sales"].sum().reset_index()
+        fig_trend = px.line(df_trend, x="MonthYear", y="Sales", title="Sales Trend Over Time")
+        st.plotly_chart(fig_trend, use_container_width=True)
+        
+        st.subheader("Top Selling Products")
+        top_products = df_filtered.groupby("Product Name")["Sales"].sum().reset_index().nlargest(10, "Sales")
+        fig_top_products = px.bar(top_products, x="Sales", y="Product Name", orientation="h", color="Sales", title="Top 10 Best-Selling Products")
+        st.plotly_chart(fig_top_products, use_container_width=True)
     else:
         st.warning("No data available for the selected filters.")
 
