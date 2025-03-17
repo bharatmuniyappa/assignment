@@ -70,7 +70,7 @@ if page == "📊 Sales Overview":
         st.plotly_chart(fig_trend, use_container_width=True)
         
         st.subheader("Top Selling Products")
-        top_products = df_filtered.groupby("Product Name")["Sales"].sum().reset_index().nlargest(10, "Sales")
+        top_products = df_filtered.groupby("Product Name")["Sales"].sum().reset_index().nlargest(10, "Sales").sort_values(by="Sales", ascending=True)
         fig_top_products = px.bar(top_products, x="Sales", y="Product Name", orientation="h", color="Sales", title="Top 10 Best-Selling Products")
         st.plotly_chart(fig_top_products, use_container_width=True)
     else:
@@ -80,8 +80,8 @@ elif page == "📈 Performance Analytics":
     st.title("📈 Performance Analytics")
     if not df_filtered.empty:
         st.subheader("Sales by Region")
-        sales_by_region = df_filtered.groupby("Region")["Sales"].sum().reset_index()
-        fig_region = px.bar(sales_by_region, x="Region", y="Sales", title="Sales by Region", color="Sales")
+        sales_by_region = df_filtered.groupby("Region")["Sales"].sum().reset_index().sort_values(by="Sales", ascending=True)
+        fig_region = px.bar(sales_by_region, x="Sales", y="Region", orientation="h", title="Sales by Region", color="Sales")
         st.plotly_chart(fig_region, use_container_width=True)
     else:
         st.warning("No data available for the selected filters.")
@@ -90,7 +90,7 @@ elif page == "📌 Customer Insights":
     st.title("📌 Customer Insights")
     if not df_filtered.empty:
         st.subheader("Top Customers by Sales")
-        top_customers = df_filtered.groupby("Customer Name")["Sales"].sum().reset_index().nlargest(10, "Sales")
+        top_customers = df_filtered.groupby("Customer Name")["Sales"].sum().reset_index().nlargest(10, "Sales").sort_values(by="Sales", ascending=True)
         fig_customers = px.bar(top_customers, x="Sales", y="Customer Name", orientation="h", color="Sales", title="Top 10 Customers by Sales")
         st.plotly_chart(fig_customers, use_container_width=True)
     else:
@@ -100,7 +100,7 @@ elif page == "📦 Product Analysis":
     st.title("📦 Product Analysis")
     if not df_filtered.empty:
         st.subheader("Most Profitable Products")
-        profitable_products = df_filtered.groupby("Product Name")["Profit"].sum().reset_index().nlargest(10, "Profit")
+        profitable_products = df_filtered.groupby("Product Name")["Profit"].sum().reset_index().nlargest(10, "Profit").sort_values(by="Profit", ascending=True)
         fig_product = px.bar(profitable_products, x="Profit", y="Product Name", orientation="h", color="Profit", title="Top 10 Profitable Products")
         st.plotly_chart(fig_product, use_container_width=True)
     else:
@@ -111,3 +111,4 @@ if not df_filtered.empty:
     csv = df_filtered.to_csv(index=False).encode('utf-8')
     st.sidebar.download_button(label="Download Data", data=csv, file_name='filtered_data.csv', mime='text/csv')
 
+st.success("Dashboard updated with enhanced features and layout! 🚀")
