@@ -22,7 +22,6 @@ page = st.sidebar.radio("Go to:", ["📊 Sales Overview", "📈 Performance Anal
 # ---- Sidebar Filters ----
 st.sidebar.title("Filters")
 
-# Multi-Select Filters with "All" Option
 def multiselect_with_all(label, options, default_options):
     selected_options = st.sidebar.multiselect(label, ["All"] + options, default=["All"])
     return options if "All" in selected_options else selected_options
@@ -50,43 +49,41 @@ df_filtered = df_filtered[(df_filtered["Order Date"] >= pd.to_datetime(from_date
 total_sales = df_filtered["Sales"].sum() if not df_filtered.empty else 0
 total_profit = df_filtered["Profit"].sum() if not df_filtered.empty else 0
 margin_rate = (total_profit / total_sales) if total_sales != 0 else 0
+total_quantity = df_filtered["Quantity"].sum() if not df_filtered.empty else 0
 
 # ---- Display KPIs ----
 st.title("📊 Sales Overview")
-col1, col2, col3 = st.columns(3)
+col1, col2, col3, col4 = st.columns(4)
 with col1:
-    st.metric(label="Total Revenue", value=f"${total_sales:,.2f}")
+    st.metric(label="Sales", value=f"${total_sales/1_000_000:.2f}M")
 with col2:
-    st.metric(label="Net Profit", value=f"${total_profit:,.2f}")
+    st.metric(label="Quantity Sold", value=f"{total_quantity/1_000:.1f}K")
 with col3:
-    st.metric(label="Profit Margin", value=f"{(margin_rate * 100):,.2f}%")
+    st.metric(label="Profit", value=f"${total_profit/1_000:.1f}K")
+with col4:
+    st.metric(label="Margin Rate", value=f"{(margin_rate * 100):,.2f}%")
 
-# ---- Visualizations ----
-st.subheader("Revenue Breakdown by Category & Sub-Category")
-treemap_fig = px.treemap(df_filtered, path=["Category", "Sub-Category"], values="Sales", title="Category Revenue Breakdown")
-st.plotly_chart(treemap_fig, use_container_width=True)
+# ---- KPI Selection ----
+st.subheader("Visualize KPI through interactive charts")
+kpi_options = ["Sales", "Quantity", "Profit", "Margin Rate"]
+selected_kpi = st.radio("Select KPI to display:", options=kpi_options, horizontal=True)
 
-st.subheader("Top 5 Best-Selling Products")
-top_products = df_filtered.groupby("Product Name")["Sales"].sum().reset_index().nlargest(5, "Sales")
+# ---- Trend Analysis ----
+st.subheader("Sales Over Time")
+df_filtered["MonthYear"] = df_filtered["Order Date"].dt.to_period("M").astype(str)
+df_trend = df_filtered.groupby("MonthYear")[["Sales", "Profit", "Quantity"]].sum().reset_index()
+fig_line = px.line(df_trend, x="MonthYear", y=selected_kpi, title=f"{selected_kpi} Over Time")
+st.plotly_chart(fig_line, use_container_width=True)
+
+# ---- Top Products Chart ----
+st.subheader("Top 10 Products by Sales")
+top_products = df_filtered.groupby("Product Name")["Sales"].sum().reset_index().nlargest(10, "Sales")
 fig_bar = px.bar(top_products, x="Sales", y="Product Name", orientation="h", color="Sales", title="Best-Selling Products")
 st.plotly_chart(fig_bar, use_container_width=True)
-
-st.subheader("Profit vs. Revenue")
-fig_scatter = px.scatter(df_filtered, x="Sales", y="Profit", color="Category", size="Quantity", title="Profitability vs Revenue")
-st.plotly_chart(fig_scatter, use_container_width=True)
-
-# ---- Performance Analytics Page ----
-if page == "📈 Performance Analytics":
-    st.title("📈 Performance Analytics")
-    st.subheader("KPI Trend Over Time")
-    df_filtered["MonthYear"] = df_filtered["Order Date"].dt.to_period("M").astype(str)
-    df_trend = df_filtered.groupby("MonthYear")[["Sales", "Profit"]].sum().reset_index()
-    fig_line = px.line(df_trend, x="MonthYear", y="Sales", title="Revenue Trends Over Time")
-    st.plotly_chart(fig_line, use_container_width=True)
 
 # ---- Data Export ----
 if not df_filtered.empty:
     csv = df_filtered.to_csv(index=False).encode('utf-8')
     st.sidebar.download_button(label="Download Data", data=csv, file_name='filtered_data.csv', mime='text/csv')
 
-st.success("Dashboard")
+st.success("Dashboard updated with enhanced features and layout! 🚀")
