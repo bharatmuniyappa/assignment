@@ -7,19 +7,17 @@ import os
 # Set Streamlit page configuration
 st.set_page_config(page_title="Retail Insights Dashboard", layout="wide")
 
-# Load Data
+# ---- Load Data ----
 @st.cache_data
 def load_data():
-    file_path = "/mnt/data/Sample - Superstore.xlsx"
-    if not os.path.exists(file_path):
-        st.error("File not found. Please upload the correct file.")
-        return pd.DataFrame()  # Return an empty dataframe to prevent errors
-    df = pd.read_excel(file_path, engine="openpyxl")
+    # Adjust the path if needed, e.g. "data/Sample - Superstore.xlsx"
+    df = pd.read_excel("Sample - Superstore.xlsx", engine="openpyxl")
+    # Convert Order Date to datetime if not already
     if not pd.api.types.is_datetime64_any_dtype(df["Order Date"]):
         df["Order Date"] = pd.to_datetime(df["Order Date"])
     return df
 
-df = load_data()
+df_original = load_data()
 
 # Sidebar Navigation
 st.sidebar.title("Dashboard Sections")
