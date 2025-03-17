@@ -111,4 +111,3 @@ if not df_filtered.empty:
     csv = df_filtered.to_csv(index=False).encode('utf-8')
     st.sidebar.download_button(label="Download Data", data=csv, file_name='filtered_data.csv', mime='text/csv')
 
-st.success("Dashboard updated with enhanced features and layout! 🚀")
