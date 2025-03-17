@@ -11,7 +11,7 @@ st.set_page_config(page_title="Retail Insights Dashboard", layout="wide")
 # ---- Load Data Function ----
 @st.cache_data
 def fetch_dataset():
-    dataset = pd.read_excel("Retail_Data.xlsx", engine="openpyxl")
+    dataset = pd.read_excel("Sample - Superstore.xlsx", engine="openpyxl")
     if not pd.api.types.is_datetime64_any_dtype(dataset["Purchase Date"]):
         dataset["Purchase Date"] = pd.to_datetime(dataset["Purchase Date"])
     return dataset
@@ -142,32 +142,4 @@ fig_category = px.pie(
 )
 st.plotly_chart(fig_category, use_container_width=True)
 
-# ---- Segment Performance ----
-st.subheader("Customer Segment Performance")
-segment_summary = data_filtered.groupby("Customer Segment").agg({
-    "Revenue": "sum",
-    "Units Sold": "sum",
-    "Profit": "sum"
-}).reset_index()
-segment_summary["Profit Margin"] = (segment_summary["Profit"] / segment_summary["Revenue"]).replace([np.inf, -np.inf], 0) * 100
-
-fig_segment = px.bar(
-    segment_summary,
-    x="Customer Segment",
-    y="Revenue",
-    title="Revenue by Customer Segment",
-    text_auto=True,
-    template="plotly_white"
-)
-st.plotly_chart(fig_segment, use_container_width=True)
-
 st.markdown("---")
-st.subheader("Explore Monthly Product Performance")
-selected_year = st.selectbox("Choose Year", sorted(data_filtered["Purchase Date"].dt.year.unique(), reverse=True))
-selected_month = st.selectbox("Choose Month", sorted(data_filtered[data_filtered["Purchase Date"].dt.year == selected_year]['YearMonth'].unique()))
-monthly_data = data_filtered[(data_filtered["YearMonth"] == selected_month)]
-
-if not monthly_data.empty:
-    st.dataframe(monthly_data[["YearMonth", "Product Name", "Revenue"]])
-else:
-    st.warning("No data available for selected month.")
