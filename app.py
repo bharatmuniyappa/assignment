@@ -17,7 +17,7 @@ df_original = load_data()
 
 # ---- Sidebar Navigation ----
 st.sidebar.title("Navigation")
-page = st.sidebar.radio("Go to:", ["📊 Sales Overview", "📈 Performance Analytics"])
+page = st.sidebar.radio("Go to:", ["📊 Sales Overview", "📈 Performance Analytics", "📌 Customer Insights", "📦 Product Analysis"])
 
 # ---- Sidebar Filters ----
 st.sidebar.title("Filters")
@@ -63,24 +63,6 @@ if page == "📊 Sales Overview":
     with col4:
         st.metric(label="Margin Rate", value="N/A")
 
-    # ---- KPI Selection ----
-    st.subheader("Visualize KPI through interactive charts")
-    kpi_options = ["Sales", "Quantity", "Profit"]
-    selected_kpi = st.radio("Select KPI to display:", options=kpi_options, horizontal=True)
-
-    # ---- Trend Analysis ----
-    st.subheader("Sales Over Time")
-    df_filtered["MonthYear"] = df_filtered["Order Date"].dt.to_period("M").astype(str)
-    df_trend = df_filtered.groupby("MonthYear")[kpi_options].sum().reset_index()
-    fig_line = px.line(df_trend, x="MonthYear", y=selected_kpi, title=f"{selected_kpi} Over Time")
-    st.plotly_chart(fig_line, use_container_width=True)
-
-    # ---- Top Products Chart ----
-    st.subheader("Top 10 Products by Sales")
-    top_products = df_filtered.groupby("Product Name")["Sales"].sum().reset_index().nlargest(10, "Sales")
-    fig_bar = px.bar(top_products, x="Sales", y="Product Name", orientation="h", color="Sales", title="Best-Selling Products")
-    st.plotly_chart(fig_bar, use_container_width=True)
-
 elif page == "📈 Performance Analytics":
     st.title("📈 Performance Analytics")
     st.subheader("Sales Performance by Region")
@@ -92,6 +74,20 @@ elif page == "📈 Performance Analytics":
     profit_by_state = df_filtered.groupby("State")["Profit"].sum().reset_index()
     fig_state = px.bar(profit_by_state, x="State", y="Profit", title="Profit by State", color="Profit")
     st.plotly_chart(fig_state, use_container_width=True)
+
+elif page == "📌 Customer Insights":
+    st.title("📌 Customer Insights")
+    st.subheader("Top Customer Segments")
+    customer_segment = df_filtered.groupby("Segment")["Sales"].sum().reset_index()
+    fig_segment = px.pie(customer_segment, values="Sales", names="Segment", title="Sales Distribution by Customer Segment")
+    st.plotly_chart(fig_segment, use_container_width=True)
+
+elif page == "📦 Product Analysis":
+    st.title("📦 Product Analysis")
+    st.subheader("Most Profitable Products")
+    profitable_products = df_filtered.groupby("Product Name")["Profit"].sum().reset_index().nlargest(10, "Profit")
+    fig_product = px.bar(profitable_products, x="Profit", y="Product Name", orientation="h", color="Profit", title="Top 10 Profitable Products")
+    st.plotly_chart(fig_product, use_container_width=True)
 
 # ---- Data Export ----
 if not df_filtered.empty:
