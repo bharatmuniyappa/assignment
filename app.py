@@ -5,7 +5,7 @@ from datetime import datetime
 import os
 
 # Set Streamlit page configuration
-st.set_page_config(page_title="Retail Analytics Dashboard", layout="wide")
+st.set_page_config(page_title="Retail Insights Dashboard", layout="wide")
 
 # Load Data
 @st.cache_data
@@ -22,11 +22,11 @@ def load_data():
 df = load_data()
 
 # Sidebar Navigation
-st.sidebar.title("Dashboard Navigation")
-page = st.sidebar.radio("Select a view:", ["📊 Business Performance", "📈 Sales Trends", "📌 Customer Analysis", "📅 Monthly Overview"])
+st.sidebar.title("Dashboard Sections")
+page = st.sidebar.radio("Select a section:", ["📊 Sales Overview", "📈 Performance Trends", "📌 Customer Behavior", "📅 Monthly Analysis"])
 
 # Sidebar Filters
-st.sidebar.header("Filters")
+st.sidebar.header("Data Filters")
 
 def multiselect_with_all(label, options, default_options):
     selected_options = st.sidebar.multiselect(label, ["All"] + options, default=["All"] if set(default_options) == set(options) else default_options)
@@ -60,44 +60,44 @@ if not df.empty:
     total_orders = df_filtered["Order ID"].nunique()
 
     # Display KPI Metrics
-    st.title("📊 Retail Performance Dashboard")
+    st.title("📊 Retail Insights Dashboard")
     col1, col2, col3 = st.columns(3)
-    col1.metric("Total Sales", f"${total_sales:,.2f}")
+    col1.metric("Total Revenue", f"${total_sales:,.2f}")
     col2.metric("Total Profit", f"${total_profit:,.2f}")
     col3.metric("Total Orders", total_orders)
 
     # Charts
-    if page == "📊 Business Performance":
-        st.subheader("Sales Breakdown by Category")
-        fig_category = px.treemap(df_filtered, path=["Category", "Sub-Category"], values="Sales", title="Sales by Category")
+    if page == "📊 Sales Overview":
+        st.subheader("Category-Wise Sales Distribution")
+        fig_category = px.treemap(df_filtered, path=["Category", "Sub-Category"], values="Sales", title="Sales by Product Category")
         st.plotly_chart(fig_category, use_container_width=True)
 
-        st.subheader("Top 10 Products by Sales")
+        st.subheader("Top Performing Products")
         top_products = df_filtered.groupby("Product Name").agg({"Sales": "sum"}).reset_index()
         top_products = top_products.sort_values(by="Sales", ascending=False).head(10)
-        fig_bar = px.bar(top_products, x="Sales", y="Product Name", orientation="h", title="Top Selling Products")
+        fig_bar = px.bar(top_products, x="Sales", y="Product Name", orientation="h", title="Best-Selling Products")
         st.plotly_chart(fig_bar, use_container_width=True)
 
-    elif page == "📈 Sales Trends":
-        st.subheader("Profitability vs Sales")
-        fig_scatter = px.scatter(df_filtered, x="Sales", y="Profit", color="Category", size="Quantity", title="Profit vs Sales")
+    elif page == "📈 Performance Trends":
+        st.subheader("Sales vs Profitability")
+        fig_scatter = px.scatter(df_filtered, x="Sales", y="Profit", color="Category", size="Quantity", title="Revenue vs Profit")
         st.plotly_chart(fig_scatter, use_container_width=True)
 
-        st.subheader("Sales Over Time")
+        st.subheader("Sales Growth Over Time")
         df_time_series = df_filtered.groupby(df_filtered["Order Date"].dt.to_period("M")).sum().reset_index()
-        fig_trend = px.line(df_time_series, x="Order Date", y="Sales", markers=True, title="Monthly Sales Trend")
+        fig_trend = px.line(df_time_series, x="Order Date", y="Sales", markers=True, title="Monthly Sales Performance")
         st.plotly_chart(fig_trend, use_container_width=True)
 
-    elif page == "📌 Customer Analysis":
-        st.subheader("Customer Segmentation")
-        fig_segment = px.pie(df_filtered, names="Segment", values="Sales", title="Sales by Customer Segment")
+    elif page == "📌 Customer Behavior":
+        st.subheader("Customer Segments and Sales")
+        fig_segment = px.pie(df_filtered, names="Segment", values="Sales", title="Sales Breakdown by Customer Segment")
         st.plotly_chart(fig_segment, use_container_width=True)
 
-    elif page == "📅 Monthly Overview":
-        st.subheader("Month-wise Sales Analysis")
+    elif page == "📅 Monthly Analysis":
+        st.subheader("Monthly Revenue Trends")
         df_filtered["MonthYear"] = df_filtered["Order Date"].dt.to_period("M").astype(str)
         monthly_sales = df_filtered.groupby("MonthYear")["Sales"].sum().reset_index()
-        fig_monthly = px.bar(monthly_sales, x="MonthYear", y="Sales", title="Monthly Sales Distribution")
+        fig_monthly = px.bar(monthly_sales, x="MonthYear", y="Sales", title="Revenue Trends per Month")
         st.plotly_chart(fig_monthly, use_container_width=True)
 
-    st.success("Dashboard Updated Successfully! 🚀")
+    st.success("Dashboard Successfully Updated! 🚀")
