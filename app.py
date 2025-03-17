@@ -1,17 +1,7 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[1]:
-
-
 import streamlit as st
 import pandas as pd
 import plotly.express as px
 from datetime import datetime
-
-
-# In[2]:
-
 
 # ---- Set page layout ----
 st.set_page_config(page_title="SuperStore KPI Dashboard", layout="wide")
@@ -35,19 +25,11 @@ def load_data():
 
 df_original = load_data()
 
-
-# In[3]:
-
-
 # ---- Debugging: Check Available Columns ----
 st.write("Available columns in dataset:", df_original.columns.tolist())
 
 # ---- Sidebar Filters ----
 st.sidebar.title("Filters")
-
-
-# In[4]:
-
 
 # Persistent Filter State
 def filter_selection(key, options):
@@ -55,19 +37,11 @@ def filter_selection(key, options):
         st.session_state[key] = "All"
     return st.sidebar.selectbox(f"Select {key}", options=["All"] + options, index=options.index(st.session_state[key]) if st.session_state[key] in options else 0)
 
-
-# In[5]:
-
-
 # Region Filter (Using Lowercase Column Name)
 all_regions = sorted(df_original["region"].dropna().unique())
 selected_region = filter_selection("Region", all_regions)
 
 df_filtered = df_original if selected_region == "All" else df_original[df_original["region"] == selected_region]
-
-
-# In[6]:
-
 
 # State Filter
 all_states = sorted(df_filtered["state"].dropna().unique())
@@ -75,29 +49,17 @@ selected_state = filter_selection("State", all_states)
 
 df_filtered = df_filtered if selected_state == "All" else df_filtered[df_filtered["state"] == selected_state]
 
-
-# In[7]:
-
-
 # Category Filter
 all_categories = sorted(df_filtered["category"].dropna().unique())
 selected_category = filter_selection("Category", all_categories)
 
 df_filtered = df_filtered if selected_category == "All" else df_filtered[df_filtered["category"] == selected_category]
 
-
-# In[8]:
-
-
 # Sub-Category Filter
 all_subcats = sorted(df_filtered["sub-category"].dropna().unique())
 selected_subcat = filter_selection("Sub-Category", all_subcats)
 
 df_filtered = df_filtered if selected_subcat == "All" else df_filtered[df_filtered["sub-category"] == selected_subcat]
-
-
-# In[9]:
-
 
 # ---- Date Range Filter ----
 if df_filtered.empty:
@@ -110,15 +72,12 @@ to_date = st.sidebar.date_input("To Date", value=max_date, min_value=min_date, m
 
 df_filtered = df_filtered[(df_filtered["order date"] >= pd.to_datetime(from_date)) & (df_filtered["order date"] <= pd.to_datetime(to_date))]
 
-
-# In[10]:
-
-
 # ---- Title ----
 st.title("SuperStore KPI Dashboard")
 
 # ---- KPI Section ----
 st.subheader("Key Performance Indicators")
+
 total_sales = df_filtered["sales"].sum() if not df_filtered.empty else 0
 total_quantity = df_filtered["quantity"].sum() if not df_filtered.empty else 0
 total_profit = df_filtered["profit"].sum() if not df_filtered.empty else 0
@@ -129,18 +88,10 @@ st.metric("Total Quantity Sold", f"{total_quantity:,}")
 st.metric("Total Profit", f"${total_profit:,.2f}")
 st.metric("Margin Rate", f"{margin_rate * 100:.2f}%")
 
-
-# In[11]:
-
-
 # ---- KPI Selection ----
 st.subheader("Visualize KPI Trends & Insights")
 kpi_options = ["sales", "quantity", "profit", "margin rate"]
 selected_kpi = st.radio("Select KPI to display:", options=kpi_options, horizontal=True)
-
-
-# In[12]:
-
 
 # ---- Visualizations ----
 if not df_filtered.empty:
@@ -165,28 +116,3 @@ if not df_filtered.empty:
 
 else:
     st.warning("No data available for the selected filters and date range.")
-
-
-# In[13]:
-
-
-# ---- Additional Enhancements ----
-# Dark Mode Toggle
-dark_mode = st.sidebar.toggle("Dark Mode")
-if dark_mode:
-    st.markdown("<style>body { background-color: #333333; color: white; }</style>", unsafe_allow_html=True)
-else:
-    st.markdown("<style>body { background-color: white; color: black; }</style>", unsafe_allow_html=True)
-
-# CSV Export
-csv = df_filtered.to_csv(index=False).encode("utf-8")
-st.sidebar.download_button("Download Filtered Data", csv, "filtered_data.csv", "text/csv")
-
-st.success("Dashboard loaded successfully!")
-
-
-# In[ ]:
-
-
-
-
