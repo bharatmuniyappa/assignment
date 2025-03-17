@@ -21,17 +21,6 @@ def load_data():
 
 df_original = load_data()
 
-# Dashboard About Section
-st.sidebar.markdown(
-    """
-    ### About This Dashboard
-    Welcome to the SuperStore KPI Dashboard! 
-    This tool allows you to analyze sales data across different dimensions such as region, state, and product category. 
-    Utilize the sidebar filters to view specific metrics and identify trends through interactive charts. 
-    Enhance your decision-making with insights on sales, profits, and more.
-    """
-)
-
 # ---- Sidebar Filters ----
 st.sidebar.title("Filters")
 
