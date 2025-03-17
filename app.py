@@ -45,6 +45,18 @@ selected_ship_modes = st.sidebar.multiselect("Select Ship Mode(s)", all_ship_mod
 
 df_filtered = df_filtered[df_filtered["Ship Mode"].isin(selected_ship_modes)]
 
+# Customer Segment Filter
+all_segments = sorted(df_filtered["Segment"].dropna().unique())
+selected_segments = st.sidebar.multiselect("Select Customer Segment(s)", all_segments, default=all_segments)
+
+df_filtered = df_filtered[df_filtered["Segment"].isin(selected_segments)]
+
+# Payment Method Filter
+if "Payment Method" in df_filtered.columns:
+    all_payment_methods = sorted(df_filtered["Payment Method"].dropna().unique())
+    selected_payment_methods = st.sidebar.multiselect("Select Payment Method(s)", all_payment_methods, default=all_payment_methods)
+    df_filtered = df_filtered[df_filtered["Payment Method"].isin(selected_payment_methods)]
+
 # Date Range Filter
 min_date, max_date = df_filtered["Order Date"].min(), df_filtered["Order Date"].max()
 from_date = st.sidebar.date_input("From Date", value=min_date, min_value=min_date, max_value=max_date, key="from_date")
@@ -72,7 +84,7 @@ else:
     kpi_col4.metric("Margin Rate", f"{margin_rate * 100:.2f}%")
 
     # ---- Multi-Dashboard Views ----
-    tab1, tab2, tab3, tab4, tab5 = st.tabs(["Overview", "Regional Analysis", "Forecasting", "Product Insights", "Customer Segmentation"])
+    tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(["Overview", "Regional Analysis", "Forecasting", "Product Insights", "Customer Segmentation", "Profitability Analysis"])
     
     with tab1:
         st.subheader("Overall Performance")
@@ -100,6 +112,11 @@ else:
         st.subheader("Customer Segmentation")
         fig_segment = px.pie(df_filtered, names="Segment", values="Sales", title="Sales Distribution by Customer Segment")
         st.plotly_chart(fig_segment, use_container_width=True)
+    
+    with tab6:
+        st.subheader("Profitability Analysis")
+        fig_profit = px.bar(df_filtered, x="Product Name", y="Profit", title="Profit by Product")
+        st.plotly_chart(fig_profit, use_container_width=True)
     
     # ---- Additional Enhancements ----
     st.sidebar.download_button("Download Filtered Data", df_filtered.to_csv(index=False).encode("utf-8"), "filtered_data.csv", "text/csv")
