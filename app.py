@@ -80,8 +80,7 @@ elif page == "📈 Performance Analytics":
     st.title("📈 Performance Analytics")
     if not df_filtered.empty:
         st.subheader("Sales by Region")
-        sales_by_region = df_filtered.groupby("Region")["Sales"].sum().reset_index().sort_values(by="Sales", ascending=True)
-        fig_region = px.bar(sales_by_region, x="Sales", y="Region", orientation="h", title="Sales by Region", color="Sales")
+        fig_region = px.scatter(df_filtered, x="Sales", y="Profit", color="Region", size="Quantity", title="Sales vs Profit by Region")
         st.plotly_chart(fig_region, use_container_width=True)
     else:
         st.warning("No data available for the selected filters.")
@@ -110,5 +109,3 @@ elif page == "📦 Product Analysis":
 if not df_filtered.empty:
     csv = df_filtered.to_csv(index=False).encode('utf-8')
     st.sidebar.download_button(label="Download Data", data=csv, file_name='filtered_data.csv', mime='text/csv')
-
-st.success("Dashboard updated with enhanced features and layout! 🚀")
