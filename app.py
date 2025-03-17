@@ -72,7 +72,9 @@ if page == "📊 Sales Overview":
     # ---- Trend Analysis ----
     st.subheader("Sales Over Time")
     df_filtered["MonthYear"] = df_filtered["Order Date"].dt.to_period("M").astype(str)
-    df_trend = df_filtered.groupby("MonthYear")[["Sales", "Profit", "Quantity"]].sum().reset_index()
+    df_trend = df_filtered.groupby("MonthYear")["Sales", "Profit", "Quantity"].sum().reset_index()
+    df_trend["Margin Rate"] = (df_trend["Profit"] / df_trend["Sales"] * 100).fillna(0)
+    
     fig_line = px.line(df_trend, x="MonthYear", y=selected_kpi, title=f"{selected_kpi} Over Time")
     st.plotly_chart(fig_line, use_container_width=True)
 
