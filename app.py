@@ -39,53 +39,66 @@ selected_subcategories = multiselect_with_all("Choose Sub-Category(s)", sorted(d
 df_filtered = df_filtered[df_filtered["Sub-Category"].isin(selected_subcategories)]
 
 # Date Filter
-min_date, max_date = df_filtered["Order Date"].min(), df_filtered["Order Date"].max()
-from_date = st.sidebar.date_input("Start Date", value=min_date, min_value=min_date, max_value=max_date)
-to_date = st.sidebar.date_input("End Date", value=max_date, min_value=min_date, max_value=max_date)
-
-df_filtered = df_filtered[(df_filtered["Order Date"] >= pd.to_datetime(from_date)) & (df_filtered["Order Date"] <= pd.to_datetime(to_date))]
+if not df_filtered.empty:
+    min_date, max_date = df_filtered["Order Date"].min(), df_filtered["Order Date"].max()
+    from_date = st.sidebar.date_input("Start Date", value=min_date, min_value=min_date, max_value=max_date)
+    to_date = st.sidebar.date_input("End Date", value=max_date, min_value=min_date, max_value=max_date)
+    df_filtered = df_filtered[(df_filtered["Order Date"] >= pd.to_datetime(from_date)) & (df_filtered["Order Date"] <= pd.to_datetime(to_date))]
 
 if page == "📊 Sales Overview":
     st.title("📊 Sales Overview")
-    total_sales = df_filtered["Sales"].sum() if not df_filtered.empty else 0
-    total_profit = df_filtered["Profit"].sum() if not df_filtered.empty else 0
-    total_quantity = df_filtered["Quantity"].sum() if not df_filtered.empty else 0
-    
-    col1, col2, col3, col4 = st.columns(4)
-    with col1:
-        st.metric(label="Sales", value=f"${total_sales/1_000_000:.2f}M")
-    with col2:
-        st.metric(label="Quantity Sold", value=f"{total_quantity/1_000:.1f}K")
-    with col3:
-        st.metric(label="Profit", value=f"${total_profit/1_000:.1f}K")
-    with col4:
-        st.metric(label="Margin Rate", value="N/A")
+    if not df_filtered.empty:
+        total_sales = df_filtered["Sales"].sum()
+        total_profit = df_filtered["Profit"].sum()
+        total_quantity = df_filtered["Quantity"].sum()
+        margin_rate = (total_profit / total_sales * 100) if total_sales != 0 else 0
+        
+        col1, col2, col3, col4 = st.columns(4)
+        with col1:
+            st.metric(label="Sales", value=f"${total_sales/1_000_000:.2f}M")
+        with col2:
+            st.metric(label="Quantity Sold", value=f"{total_quantity/1_000:.1f}K")
+        with col3:
+            st.metric(label="Profit", value=f"${total_profit/1_000:.1f}K")
+        with col4:
+            st.metric(label="Margin Rate", value=f"{margin_rate:.2f}%")
+    else:
+        st.warning("No data available for the selected filters.")
 
 elif page == "📈 Performance Analytics":
     st.title("📈 Performance Analytics")
-    st.subheader("Sales Performance by Region")
-    sales_by_region = df_filtered.groupby("Region")["Sales"].sum().reset_index()
-    fig_region = px.bar(sales_by_region, x="Region", y="Sales", title="Sales by Region", color="Sales")
-    st.plotly_chart(fig_region, use_container_width=True)
+    if not df_filtered.empty:
+        st.subheader("Sales Performance by Region")
+        sales_by_region = df_filtered.groupby("Region")["Sales"].sum().reset_index()
+        fig_region = px.bar(sales_by_region, x="Region", y="Sales", title="Sales by Region", color="Sales")
+        st.plotly_chart(fig_region, use_container_width=True)
 
-    st.subheader("Profitability by State")
-    profit_by_state = df_filtered.groupby("State")["Profit"].sum().reset_index()
-    fig_state = px.bar(profit_by_state, x="State", y="Profit", title="Profit by State", color="Profit")
-    st.plotly_chart(fig_state, use_container_width=True)
+        st.subheader("Profitability by State")
+        profit_by_state = df_filtered.groupby("State")["Profit"].sum().reset_index()
+        fig_state = px.bar(profit_by_state, x="State", y="Profit", title="Profit by State", color="Profit")
+        st.plotly_chart(fig_state, use_container_width=True)
+    else:
+        st.warning("No data available for the selected filters.")
 
 elif page == "📌 Customer Insights":
     st.title("📌 Customer Insights")
-    st.subheader("Top Customers by Sales")
-    top_customers = df_filtered.groupby("Customer Name")["Sales"].sum().reset_index().nlargest(10, "Sales")
-    fig_customers = px.bar(top_customers, x="Sales", y="Customer Name", orientation="h", color="Sales", title="Top 10 Customers by Sales")
-    st.plotly_chart(fig_customers, use_container_width=True)
+    if not df_filtered.empty:
+        st.subheader("Top Customers by Sales")
+        top_customers = df_filtered.groupby("Customer Name")["Sales"].sum().reset_index().nlargest(10, "Sales")
+        fig_customers = px.bar(top_customers, x="Sales", y="Customer Name", orientation="h", color="Sales", title="Top 10 Customers by Sales")
+        st.plotly_chart(fig_customers, use_container_width=True)
+    else:
+        st.warning("No data available for the selected filters.")
 
 elif page == "📦 Product Analysis":
     st.title("📦 Product Analysis")
-    st.subheader("Most Profitable Products")
-    profitable_products = df_filtered.groupby("Product Name")["Profit"].sum().reset_index().nlargest(10, "Profit")
-    fig_product = px.bar(profitable_products, x="Profit", y="Product Name", orientation="h", color="Profit", title="Top 10 Profitable Products")
-    st.plotly_chart(fig_product, use_container_width=True)
+    if not df_filtered.empty:
+        st.subheader("Most Profitable Products")
+        profitable_products = df_filtered.groupby("Product Name")["Profit"].sum().reset_index().nlargest(10, "Profit")
+        fig_product = px.bar(profitable_products, x="Profit", y="Product Name", orientation="h", color="Profit", title="Top 10 Profitable Products")
+        st.plotly_chart(fig_product, use_container_width=True)
+    else:
+        st.warning("No data available for the selected filters.")
 
 # ---- Data Export ----
 if not df_filtered.empty:
