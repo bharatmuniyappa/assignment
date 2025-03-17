@@ -1,101 +1,173 @@
 import streamlit as st
 import pandas as pd
+import numpy as np
 import plotly.express as px
 from datetime import datetime
-import os
+import base64
 
-# Set Streamlit page configuration
+# Configure Streamlit page layout
 st.set_page_config(page_title="Retail Insights Dashboard", layout="wide")
 
-# ---- Load Data ----
+# ---- Load Data Function ----
 @st.cache_data
-def load_data():
-    # Adjust the path if needed, e.g. "data/Sample - Superstore.xlsx"
-    df = pd.read_excel("Sample - Superstore.xlsx", engine="openpyxl")
-    # Convert Order Date to datetime if not already
-    if not pd.api.types.is_datetime64_any_dtype(df["Order Date"]):
-        df["Order Date"] = pd.to_datetime(df["Order Date"])
-    return df
+def fetch_dataset():
+    dataset = pd.read_excel("Retail_Data.xlsx", engine="openpyxl")
+    if not pd.api.types.is_datetime64_any_dtype(dataset["Purchase Date"]):
+        dataset["Purchase Date"] = pd.to_datetime(dataset["Purchase Date"])
+    return dataset
 
-df_original = load_data()
+raw_data = fetch_dataset()
 
-# Sidebar Navigation
-st.sidebar.title("Dashboard Sections")
-page = st.sidebar.radio("Select a section:", ["📊 Sales Overview", "📈 Performance Trends", "📌 Customer Behavior", "📅 Monthly Analysis"])
+# Sidebar Information Section
+st.sidebar.markdown(
+    """
+    ### About This Dashboard
+    Welcome to the Retail Insights Dashboard! 
+    Analyze transaction data across various dimensions including location, product type, and customer segment. 
+    Use the filters to explore trends in revenue, profits, and more.
+    """
+)
 
-# Sidebar Filters
-st.sidebar.header("Data Filters")
+# ---- Sidebar Filters ----
+st.sidebar.title("Data Filters")
 
-def multiselect_with_all(label, options, default_options):
-    selected_options = st.sidebar.multiselect(label, ["All"] + options, default=["All"] if set(default_options) == set(options) else default_options)
-    if "All" in selected_options and len(selected_options) > 1:
-        selected_options.remove("All")
-    elif len(selected_options) == 0:
-        st.sidebar.warning(f"At least one {label.lower()} must be selected.")
-        selected_options = ["All"]
-    return options if "All" in selected_options else selected_options
+# Region Selection
+regions = sorted(raw_data["Region"].dropna().unique())
+selected_region = st.sidebar.selectbox("Choose Region", options=["All"] + regions)
 
-if not df.empty:
-    selected_regions = multiselect_with_all("Select Region(s)", sorted(df["Region"].dropna().unique()), df["Region"].unique())
-    df_filtered = df[df["Region"].isin(selected_regions)]
+data_filtered = raw_data.copy()
+if selected_region != "All":
+    data_filtered = data_filtered[data_filtered["Region"] == selected_region]
 
-    selected_states = multiselect_with_all("Select State(s)", sorted(df_filtered["State"].dropna().unique()), df_filtered["State"].unique())
-    df_filtered = df_filtered[df_filtered["State"].isin(selected_states)]
+# State Selection
+states = sorted(data_filtered["State"].dropna().unique())
+selected_state = st.sidebar.selectbox("Choose State", options=["All"] + states)
+if selected_state != "All":
+    data_filtered = data_filtered[data_filtered["State"] == selected_state]
 
-    selected_categories = multiselect_with_all("Select Category(s)", sorted(df_filtered["Category"].dropna().unique()), df_filtered["Category"].unique())
-    df_filtered = df_filtered[df_filtered["Category"].isin(selected_categories)]
+# Category Selection
+categories = sorted(data_filtered["Category"].dropna().unique())
+selected_category = st.sidebar.selectbox("Choose Category", options=["All"] + categories)
+if selected_category != "All":
+    data_filtered = data_filtered[data_filtered["Category"] == selected_category]
 
-    # Date Range Filter
-    min_date, max_date = df_filtered["Order Date"].min(), df_filtered["Order Date"].max()
-    from_date = st.sidebar.date_input("From Date", value=min_date, min_value=min_date, max_value=max_date)
-    to_date = st.sidebar.date_input("To Date", value=max_date, min_value=min_date, max_value=max_date)
-    df_filtered = df_filtered[(df_filtered["Order Date"] >= pd.to_datetime(from_date)) & (df_filtered["Order Date"] <= pd.to_datetime(to_date))]
+# Date Range Selection
+min_date = data_filtered["Purchase Date"].min()
+max_date = data_filtered["Purchase Date"].max()
+start_date = st.sidebar.date_input("Start Date", value=min_date, min_value=min_date, max_value=max_date)
+end_date = st.sidebar.date_input("End Date", value=max_date, min_value=min_date, max_value=max_date)
 
-    # KPI Metrics
-    total_sales = df_filtered["Sales"].sum()
-    total_profit = df_filtered["Profit"].sum()
-    margin_rate = (total_profit / total_sales) if total_sales != 0 else 0
-    total_orders = df_filtered["Order ID"].nunique()
+if start_date > end_date:
+    st.sidebar.error("Start Date cannot be later than End Date.")
 
-    # Display KPI Metrics
-    st.title("📊 Retail Insights Dashboard")
-    col1, col2, col3 = st.columns(3)
-    col1.metric("Total Revenue", f"${total_sales:,.2f}")
-    col2.metric("Total Profit", f"${total_profit:,.2f}")
-    col3.metric("Total Orders", total_orders)
+data_filtered = data_filtered[(data_filtered["Purchase Date"] >= pd.to_datetime(start_date)) &
+                              (data_filtered["Purchase Date"] <= pd.to_datetime(end_date))]
 
-    # Charts
-    if page == "📊 Sales Overview":
-        st.subheader("Category-Wise Sales Distribution")
-        fig_category = px.treemap(df_filtered, path=["Category", "Sub-Category"], values="Sales", title="Sales by Product Category")
-        st.plotly_chart(fig_category, use_container_width=True)
+# Download Filtered Data
+if not data_filtered.empty:
+    csv_data = data_filtered.to_csv(index=False).encode('utf-8')
+    st.sidebar.download_button(
+        label="Download Data (CSV)",
+        data=csv_data,
+        file_name='filtered_retail_data.csv',
+        mime='text/csv'
+    )
+else:
+    st.sidebar.error("No data available. Adjust filters.")
 
-        st.subheader("Top Performing Products")
-        top_products = df_filtered.groupby("Product Name").agg({"Sales": "sum"}).reset_index()
-        top_products = top_products.sort_values(by="Sales", ascending=False).head(10)
-        fig_bar = px.bar(top_products, x="Sales", y="Product Name", orientation="h", title="Best-Selling Products")
-        st.plotly_chart(fig_bar, use_container_width=True)
+# ---- Dashboard Title ----
+st.title("Retail Insights Dashboard")
 
-    elif page == "📈 Performance Trends":
-        st.subheader("Sales vs Profitability")
-        fig_scatter = px.scatter(df_filtered, x="Sales", y="Profit", color="Category", size="Quantity", title="Revenue vs Profit")
-        st.plotly_chart(fig_scatter, use_container_width=True)
+# ---- KPI Calculations ----
+def format_currency(value):
+    if value >= 1_000_000:
+        return f"${value / 1_000_000:.2f}M"
+    elif value >= 1_000:
+        return f"${value / 1_000:.1f}K"
+    else:
+        return f"${value:.2f}"
 
-        st.subheader("Sales Growth Over Time")
-        df_time_series = df_filtered.groupby(df_filtered["Order Date"].dt.to_period("M")).sum().reset_index()
-        fig_trend = px.line(df_time_series, x="Order Date", y="Sales", markers=True, title="Monthly Sales Performance")
-        st.plotly_chart(fig_trend, use_container_width=True)
+total_revenue = format_currency(data_filtered["Revenue"].sum())
+total_units = f"{data_filtered['Units Sold'].sum()/1000:.1f}K"
+total_profit = format_currency(data_filtered["Profit"].sum())
+profit_margin = f"{(data_filtered['Profit'].sum() / data_filtered['Revenue'].sum() * 100) if data_filtered['Revenue'].sum() != 0 else 0:.2f}%"
 
-    elif page == "📌 Customer Behavior":
-        st.subheader("Customer Segments and Sales")
-        fig_segment = px.pie(df_filtered, names="Segment", values="Sales", title="Sales Breakdown by Customer Segment")
-        st.plotly_chart(fig_segment, use_container_width=True)
+# Display KPIs
+kpi1, kpi2, kpi3, kpi4 = st.columns(4)
+kpi1.metric(label="Total Revenue", value=total_revenue)
+kpi2.metric(label="Units Sold", value=total_units)
+kpi3.metric(label="Total Profit", value=total_profit)
+kpi4.metric(label="Profit Margin", value=profit_margin)
 
-    elif page == "📅 Monthly Analysis":
-        st.subheader("Monthly Revenue Trends")
-        df_filtered["MonthYear"] = df_filtered["Order Date"].dt.to_period("M").astype(str)
-        monthly_sales = df_filtered.groupby("MonthYear")["Sales"].sum().reset_index()
-        fig_monthly = px.bar(monthly_sales, x="MonthYear", y="Sales", title="Revenue Trends per Month")
-        st.plotly_chart(fig_monthly, use_container_width=True)
+st.markdown("---")
 
-    st.success("Dashboard Successfully Updated! 🚀")
+# ---- KPI Trends Visualization ----
+st.subheader("KPI Trends Analysis")
+
+data_filtered['YearMonth'] = data_filtered['Purchase Date'].dt.to_period('M').astype(str)
+monthly_summary = data_filtered.groupby('YearMonth').agg({
+    "Revenue": "sum",
+    "Units Sold": "sum",
+    "Profit": "sum"
+}).reset_index()
+monthly_summary["Profit Margin"] = (monthly_summary["Profit"] / monthly_summary["Revenue"]).replace([np.inf, -np.inf], 0) * 100
+
+# Line Chart
+fig_trend = px.line(
+    monthly_summary,
+    x="YearMonth",
+    y="Revenue",
+    title="Monthly Revenue Trend",
+    labels={"YearMonth": "Month-Year", "Revenue": "Revenue ($)"},
+    template="plotly_white"
+)
+st.plotly_chart(fig_trend, use_container_width=True)
+
+# ---- Category Breakdown ----
+st.subheader("Category Performance")
+category_summary = data_filtered.groupby("Category").agg({
+    "Revenue": "sum",
+    "Units Sold": "sum",
+    "Profit": "sum"
+}).reset_index()
+category_summary["Profit Margin"] = (category_summary["Profit"] / category_summary["Revenue"]).replace([np.inf, -np.inf], 0) * 100
+
+fig_category = px.pie(
+    category_summary,
+    values="Revenue",
+    names="Category",
+    title="Revenue Distribution by Category",
+    hole=0.4,
+    template="plotly_white"
+)
+st.plotly_chart(fig_category, use_container_width=True)
+
+# ---- Segment Performance ----
+st.subheader("Customer Segment Performance")
+segment_summary = data_filtered.groupby("Customer Segment").agg({
+    "Revenue": "sum",
+    "Units Sold": "sum",
+    "Profit": "sum"
+}).reset_index()
+segment_summary["Profit Margin"] = (segment_summary["Profit"] / segment_summary["Revenue"]).replace([np.inf, -np.inf], 0) * 100
+
+fig_segment = px.bar(
+    segment_summary,
+    x="Customer Segment",
+    y="Revenue",
+    title="Revenue by Customer Segment",
+    text_auto=True,
+    template="plotly_white"
+)
+st.plotly_chart(fig_segment, use_container_width=True)
+
+st.markdown("---")
+st.subheader("Explore Monthly Product Performance")
+selected_year = st.selectbox("Choose Year", sorted(data_filtered["Purchase Date"].dt.year.unique(), reverse=True))
+selected_month = st.selectbox("Choose Month", sorted(data_filtered[data_filtered["Purchase Date"].dt.year == selected_year]['YearMonth'].unique()))
+monthly_data = data_filtered[(data_filtered["YearMonth"] == selected_month)]
+
+if not monthly_data.empty:
+    st.dataframe(monthly_data[["YearMonth", "Product Name", "Revenue"]])
+else:
+    st.warning("No data available for selected month.")
