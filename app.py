@@ -68,20 +68,15 @@ if page == "📊 Sales Overview":
         df_trend = df_filtered.groupby("MonthYear")["Sales"].sum().reset_index()
         fig_trend = px.line(df_trend, x="MonthYear", y="Sales", title="Sales Trend Over Time")
         st.plotly_chart(fig_trend, use_container_width=True)
-        
-        st.subheader("Top Selling Products")
-        top_products = df_filtered.groupby("Product Name")["Sales"].sum().reset_index().nlargest(10, "Sales").sort_values(by="Sales", ascending=True)
-        fig_top_products = px.bar(top_products, x="Sales", y="Product Name", orientation="h", color="Sales", title="Top 10 Best-Selling Products")
-        st.plotly_chart(fig_top_products, use_container_width=True)
     else:
         st.warning("No data available for the selected filters.")
 
 elif page == "📈 Performance Analytics":
     st.title("📈 Performance Analytics")
     if not df_filtered.empty:
-        st.subheader("Sales by Region")
-        fig_region = px.scatter(df_filtered, x="Sales", y="Profit", color="Region", size="Quantity", title="Sales vs Profit by Region")
-        st.plotly_chart(fig_region, use_container_width=True)
+        st.subheader("Profit Distribution Across Categories")
+        fig_category_profit = px.box(df_filtered, x="Category", y="Profit", color="Category", title="Profit Distribution by Category")
+        st.plotly_chart(fig_category_profit, use_container_width=True)
     else:
         st.warning("No data available for the selected filters.")
 
@@ -109,3 +104,5 @@ elif page == "📦 Product Analysis":
 if not df_filtered.empty:
     csv = df_filtered.to_csv(index=False).encode('utf-8')
     st.sidebar.download_button(label="Download Data", data=csv, file_name='filtered_data.csv', mime='text/csv')
+
+st.success("Dashboard updated with enhanced features and layout! 🚀")
