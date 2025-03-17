@@ -12,8 +12,8 @@ st.set_page_config(page_title="Retail Insights Dashboard", layout="wide")
 @st.cache_data
 def fetch_dataset():
     dataset = pd.read_excel("Sample - Superstore.xlsx", engine="openpyxl")
-    if not pd.api.types.is_datetime64_any_dtype(dataset["Purchase Date"]):
-        dataset["Purchase Date"] = pd.to_datetime(dataset["Purchase Date"])
+    if not pd.api.types.is_datetime64_any_dtype(dataset["Order Date"]):
+        dataset["Order Date"] = pd.to_datetime(dataset["Order Date"])
     return dataset
 
 raw_data = fetch_dataset()
@@ -52,16 +52,16 @@ if selected_category != "All":
     data_filtered = data_filtered[data_filtered["Category"] == selected_category]
 
 # Date Range Selection
-min_date = data_filtered["Purchase Date"].min()
-max_date = data_filtered["Purchase Date"].max()
+min_date = data_filtered["Order Date"].min()
+max_date = data_filtered["Order Date"].max()
 start_date = st.sidebar.date_input("Start Date", value=min_date, min_value=min_date, max_value=max_date)
 end_date = st.sidebar.date_input("End Date", value=max_date, min_value=min_date, max_value=max_date)
 
 if start_date > end_date:
     st.sidebar.error("Start Date cannot be later than End Date.")
 
-data_filtered = data_filtered[(data_filtered["Purchase Date"] >= pd.to_datetime(start_date)) &
-                              (data_filtered["Purchase Date"] <= pd.to_datetime(end_date))]
+data_filtered = data_filtered[(data_filtered["Order Date"] >= pd.to_datetime(start_date)) &
+                              (data_filtered["Order Date"] <= pd.to_datetime(end_date))]
 
 # Download Filtered Data
 if not data_filtered.empty:
@@ -104,7 +104,7 @@ st.markdown("---")
 # ---- KPI Trends Visualization ----
 st.subheader("KPI Trends Analysis")
 
-data_filtered['YearMonth'] = data_filtered['Purchase Date'].dt.to_period('M').astype(str)
+data_filtered['YearMonth'] = data_filtered['Order Date'].dt.to_period('M').astype(str)
 monthly_summary = data_filtered.groupby('YearMonth').agg({
     "Revenue": "sum",
     "Units Sold": "sum",
