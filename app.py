@@ -4,7 +4,7 @@ import plotly.express as px
 from datetime import datetime
 
 # Set page config for wide layout
-st.set_page_config(page_title="Retail Insights Dashboard", layout="wide")
+st.set_page_config(page_title="SuperStore KPI Dashboard", layout="wide")
 
 # ---- Load Data ----
 @st.cache_data
@@ -50,9 +50,10 @@ if page == "📊 Sales Overview":
     total_sales = df_filtered["Sales"].sum() if not df_filtered.empty else 0
     total_profit = df_filtered["Profit"].sum() if not df_filtered.empty else 0
     total_quantity = df_filtered["Quantity"].sum() if not df_filtered.empty else 0
+    margin_rate = (total_profit / total_sales * 100) if total_sales != 0 else 0
 
     # ---- Display KPIs ----
-    st.title("📊 Sales Overview")
+    st.title("SuperStore KPI Dashboard")
     col1, col2, col3, col4 = st.columns(4)
     with col1:
         st.metric(label="Sales", value=f"${total_sales/1_000_000:.2f}M")
@@ -61,33 +62,25 @@ if page == "📊 Sales Overview":
     with col3:
         st.metric(label="Profit", value=f"${total_profit/1_000:.1f}K")
     with col4:
-        st.metric(label="Margin Rate", value="N/A")
+        st.metric(label="Margin Rate", value=f"{margin_rate:.2f}%")
 
-elif page == "📈 Performance Analytics":
-    st.title("📈 Performance Analytics")
-    st.subheader("Sales Performance by Region")
-    sales_by_region = df_filtered.groupby("Region")["Sales"].sum().reset_index()
-    fig_region = px.bar(sales_by_region, x="Region", y="Sales", title="Sales by Region", color="Sales")
-    st.plotly_chart(fig_region, use_container_width=True)
+    # ---- KPI Selection ----
+    st.subheader("Visualize KPI through interactive charts")
+    kpi_options = ["Sales", "Quantity", "Profit", "Margin Rate"]
+    selected_kpi = st.radio("Select KPI to display:", options=kpi_options, horizontal=True)
 
-    st.subheader("Profitability by State")
-    profit_by_state = df_filtered.groupby("State")["Profit"].sum().reset_index()
-    fig_state = px.bar(profit_by_state, x="State", y="Profit", title="Profit by State", color="Profit")
-    st.plotly_chart(fig_state, use_container_width=True)
+    # ---- Trend Analysis ----
+    st.subheader("Sales Over Time")
+    df_filtered["MonthYear"] = df_filtered["Order Date"].dt.to_period("M").astype(str)
+    df_trend = df_filtered.groupby("MonthYear")[["Sales", "Profit", "Quantity"]].sum().reset_index()
+    fig_line = px.line(df_trend, x="MonthYear", y=selected_kpi, title=f"{selected_kpi} Over Time")
+    st.plotly_chart(fig_line, use_container_width=True)
 
-elif page == "📌 Customer Insights":
-    st.title("📌 Customer Insights")
-    st.subheader("Top Customers by Sales")
-    top_customers = df_filtered.groupby("Customer Name")["Sales"].sum().reset_index().nlargest(10, "Sales")
-    fig_customers = px.bar(top_customers, x="Sales", y="Customer Name", orientation="h", color="Sales", title="Top 10 Customers by Sales")
-    st.plotly_chart(fig_customers, use_container_width=True)
-
-elif page == "📦 Product Analysis":
-    st.title("📦 Product Analysis")
-    st.subheader("Most Profitable Products")
-    profitable_products = df_filtered.groupby("Product Name")["Profit"].sum().reset_index().nlargest(10, "Profit")
-    fig_product = px.bar(profitable_products, x="Profit", y="Product Name", orientation="h", color="Profit", title="Top 10 Profitable Products")
-    st.plotly_chart(fig_product, use_container_width=True)
+    # ---- Top Products Chart ----
+    st.subheader("Top 10 Products by Sales")
+    top_products = df_filtered.groupby("Product Name")["Sales"].sum().reset_index().nlargest(10, "Sales")
+    fig_bar = px.bar(top_products, x="Sales", y="Product Name", orientation="h", color="Sales", title="Top 10 Products by Sales")
+    st.plotly_chart(fig_bar, use_container_width=True)
 
 # ---- Data Export ----
 if not df_filtered.empty:
