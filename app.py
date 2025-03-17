@@ -49,13 +49,10 @@ df_filtered = df_filtered[(df_filtered["Order Date"] >= pd.to_datetime(from_date
 total_sales = df_filtered["Sales"].sum() if not df_filtered.empty else 0
 total_profit = df_filtered["Profit"].sum() if not df_filtered.empty else 0
 total_quantity = df_filtered["Quantity"].sum() if not df_filtered.empty else 0
-margin_rate = (total_profit / total_sales * 100) if total_sales != 0 else 0
-avg_discount = df_filtered["Discount"].mean() * 100 if not df_filtered.empty else 0
-order_count = df_filtered["Order ID"].nunique() if not df_filtered.empty else 0
 
 # ---- Display KPIs ----
 st.title("📊 Sales Overview")
-col1, col2, col3, col4, col5, col6 = st.columns(6)
+col1, col2, col3, col4 = st.columns(4)
 with col1:
     st.metric(label="Sales", value=f"${total_sales/1_000_000:.2f}M")
 with col2:
@@ -63,21 +60,17 @@ with col2:
 with col3:
     st.metric(label="Profit", value=f"${total_profit/1_000:.1f}K")
 with col4:
-    st.metric(label="Margin Rate", value=f"{margin_rate:.2f}%")
-with col5:
-    st.metric(label="Avg Discount", value=f"{avg_discount:.2f}%")
-with col6:
-    st.metric(label="Total Orders", value=f"{order_count}")
+    st.metric(label="Margin Rate", value="N/A")
 
 # ---- KPI Selection ----
 st.subheader("Visualize KPI through interactive charts")
-kpi_options = ["Sales", "Quantity", "Profit", "Margin Rate"]
+kpi_options = ["Sales", "Quantity", "Profit"]
 selected_kpi = st.radio("Select KPI to display:", options=kpi_options, horizontal=True)
 
 # ---- Trend Analysis ----
 st.subheader("Sales Over Time")
 df_filtered["MonthYear"] = df_filtered["Order Date"].dt.to_period("M").astype(str)
-df_trend = df_filtered.groupby("MonthYear")[["Sales", "Profit", "Quantity", "Margin Rate"]].sum().reset_index()
+df_trend = df_filtered.groupby("MonthYear")[["Sales", "Profit", "Quantity"]].sum().reset_index()
 fig_line = px.line(df_trend, x="MonthYear", y=selected_kpi, title=f"{selected_kpi} Over Time")
 st.plotly_chart(fig_line, use_container_width=True)
 
