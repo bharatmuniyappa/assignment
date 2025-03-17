@@ -77,10 +77,10 @@ elif page == "📈 Performance Analytics":
 
 elif page == "📌 Customer Insights":
     st.title("📌 Customer Insights")
-    st.subheader("Top Customer Segments")
-    customer_segment = df_filtered.groupby("Segment")["Sales"].sum().reset_index()
-    fig_segment = px.pie(customer_segment, values="Sales", names="Segment", title="Sales Distribution by Customer Segment")
-    st.plotly_chart(fig_segment, use_container_width=True)
+    st.subheader("Top Customers by Sales")
+    top_customers = df_filtered.groupby("Customer Name")["Sales"].sum().reset_index().nlargest(10, "Sales")
+    fig_customers = px.bar(top_customers, x="Sales", y="Customer Name", orientation="h", color="Sales", title="Top 10 Customers by Sales")
+    st.plotly_chart(fig_customers, use_container_width=True)
 
 elif page == "📦 Product Analysis":
     st.title("📦 Product Analysis")
