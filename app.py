@@ -9,7 +9,7 @@ st.set_page_config(page_title="Retail Analytics Dashboard", layout="wide")
 # Load Data
 @st.cache_data
 def load_data():
-    file_path = "/mnt/data/Sample - Superstore-1.xlsx"
+    file_path = "/mnt/data/Sample - Superstore.xlsx"
     df = pd.read_excel(file_path, sheet_name='Orders')
     if not pd.api.types.is_datetime64_any_dtype(df["Order Date"]):
         df["Order Date"] = pd.to_datetime(df["Order Date"])
