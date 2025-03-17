@@ -10,7 +10,7 @@ st.set_page_config(page_title="Retail Analytics Dashboard", layout="wide")
 # Load Data
 @st.cache_data
 def load_data():
-    file_path = "/mnt/data/Sample - Superstore-1.xlsx"
+    file_path = "/mnt/data/Sample - Superstore.xlsx"
     if not os.path.exists(file_path):
         st.error("File not found. Please upload the correct file.")
         return pd.DataFrame()  # Return an empty dataframe to prevent errors
