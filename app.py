@@ -45,7 +45,35 @@ to_date = st.sidebar.date_input("End Date", value=max_date, min_value=min_date, 
 
 df_filtered = df_filtered[(df_filtered["Order Date"] >= pd.to_datetime(from_date)) & (df_filtered["Order Date"] <= pd.to_datetime(to_date))]
 
-if page == "📌 Customer Insights":
+if page == "📊 Sales Overview":
+    st.title("📊 Sales Overview")
+    total_sales = df_filtered["Sales"].sum() if not df_filtered.empty else 0
+    total_profit = df_filtered["Profit"].sum() if not df_filtered.empty else 0
+    total_quantity = df_filtered["Quantity"].sum() if not df_filtered.empty else 0
+    
+    col1, col2, col3, col4 = st.columns(4)
+    with col1:
+        st.metric(label="Sales", value=f"${total_sales/1_000_000:.2f}M")
+    with col2:
+        st.metric(label="Quantity Sold", value=f"{total_quantity/1_000:.1f}K")
+    with col3:
+        st.metric(label="Profit", value=f"${total_profit/1_000:.1f}K")
+    with col4:
+        st.metric(label="Margin Rate", value="N/A")
+
+elif page == "📈 Performance Analytics":
+    st.title("📈 Performance Analytics")
+    st.subheader("Sales Performance by Region")
+    sales_by_region = df_filtered.groupby("Region")["Sales"].sum().reset_index()
+    fig_region = px.bar(sales_by_region, x="Region", y="Sales", title="Sales by Region", color="Sales")
+    st.plotly_chart(fig_region, use_container_width=True)
+
+    st.subheader("Profitability by State")
+    profit_by_state = df_filtered.groupby("State")["Profit"].sum().reset_index()
+    fig_state = px.bar(profit_by_state, x="State", y="Profit", title="Profit by State", color="Profit")
+    st.plotly_chart(fig_state, use_container_width=True)
+
+elif page == "📌 Customer Insights":
     st.title("📌 Customer Insights")
     st.subheader("Top Customers by Sales")
     top_customers = df_filtered.groupby("Customer Name")["Sales"].sum().reset_index().nlargest(10, "Sales")
