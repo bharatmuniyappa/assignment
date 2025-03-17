@@ -47,10 +47,11 @@ df_filtered = df_filtered[df_filtered["Ship Mode"].isin(selected_ship_modes)]
 
 # Date Range Filter
 min_date, max_date = df_filtered["Order Date"].min(), df_filtered["Order Date"].max()
-from_date = st.sidebar.date_input("From Date", value=min_date, min_value=min_date, max_value=max_date)
-to_date = st.sidebar.date_input("To Date", value=max_date, min_value=min_date, max_value=max_date)
+from_date = st.sidebar.date_input("From Date", value=min_date, min_value=min_date, max_value=max_date, key="from_date")
+to_date = st.sidebar.date_input("To Date", value=max_date, min_value=min_date, max_value=max_date, key="to_date")
 
-df_filtered = df_filtered[(df_filtered["Order Date"] >= from_date) & (df_filtered["Order Date"] <= to_date)]
+# Ensure date conversion before filtering
+df_filtered = df_filtered[(df_filtered["Order Date"].dt.date >= from_date) & (df_filtered["Order Date"].dt.date <= to_date)]
 
 # ---- KPI Section ----
 st.title("SuperStore KPI Dashboard")
