@@ -45,40 +45,53 @@ to_date = st.sidebar.date_input("End Date", value=max_date, min_value=min_date, 
 
 df_filtered = df_filtered[(df_filtered["Order Date"] >= pd.to_datetime(from_date)) & (df_filtered["Order Date"] <= pd.to_datetime(to_date))]
 
-# ---- KPI Calculation ----
-total_sales = df_filtered["Sales"].sum() if not df_filtered.empty else 0
-total_profit = df_filtered["Profit"].sum() if not df_filtered.empty else 0
-total_quantity = df_filtered["Quantity"].sum() if not df_filtered.empty else 0
+if page == "📊 Sales Overview":
+    # ---- KPI Calculation ----
+    total_sales = df_filtered["Sales"].sum() if not df_filtered.empty else 0
+    total_profit = df_filtered["Profit"].sum() if not df_filtered.empty else 0
+    total_quantity = df_filtered["Quantity"].sum() if not df_filtered.empty else 0
 
-# ---- Display KPIs ----
-st.title("📊 Sales Overview")
-col1, col2, col3, col4 = st.columns(4)
-with col1:
-    st.metric(label="Sales", value=f"${total_sales/1_000_000:.2f}M")
-with col2:
-    st.metric(label="Quantity Sold", value=f"{total_quantity/1_000:.1f}K")
-with col3:
-    st.metric(label="Profit", value=f"${total_profit/1_000:.1f}K")
-with col4:
-    st.metric(label="Margin Rate", value="N/A")
+    # ---- Display KPIs ----
+    st.title("📊 Sales Overview")
+    col1, col2, col3, col4 = st.columns(4)
+    with col1:
+        st.metric(label="Sales", value=f"${total_sales/1_000_000:.2f}M")
+    with col2:
+        st.metric(label="Quantity Sold", value=f"{total_quantity/1_000:.1f}K")
+    with col3:
+        st.metric(label="Profit", value=f"${total_profit/1_000:.1f}K")
+    with col4:
+        st.metric(label="Margin Rate", value="N/A")
 
-# ---- KPI Selection ----
-st.subheader("Visualize KPI through interactive charts")
-kpi_options = ["Sales", "Quantity", "Profit"]
-selected_kpi = st.radio("Select KPI to display:", options=kpi_options, horizontal=True)
+    # ---- KPI Selection ----
+    st.subheader("Visualize KPI through interactive charts")
+    kpi_options = ["Sales", "Quantity", "Profit"]
+    selected_kpi = st.radio("Select KPI to display:", options=kpi_options, horizontal=True)
 
-# ---- Trend Analysis ----
-st.subheader("Sales Over Time")
-df_filtered["MonthYear"] = df_filtered["Order Date"].dt.to_period("M").astype(str)
-df_trend = df_filtered.groupby("MonthYear")[["Sales", "Profit", "Quantity"]].sum().reset_index()
-fig_line = px.line(df_trend, x="MonthYear", y=selected_kpi, title=f"{selected_kpi} Over Time")
-st.plotly_chart(fig_line, use_container_width=True)
+    # ---- Trend Analysis ----
+    st.subheader("Sales Over Time")
+    df_filtered["MonthYear"] = df_filtered["Order Date"].dt.to_period("M").astype(str)
+    df_trend = df_filtered.groupby("MonthYear")[kpi_options].sum().reset_index()
+    fig_line = px.line(df_trend, x="MonthYear", y=selected_kpi, title=f"{selected_kpi} Over Time")
+    st.plotly_chart(fig_line, use_container_width=True)
 
-# ---- Top Products Chart ----
-st.subheader("Top 10 Products by Sales")
-top_products = df_filtered.groupby("Product Name")["Sales"].sum().reset_index().nlargest(10, "Sales")
-fig_bar = px.bar(top_products, x="Sales", y="Product Name", orientation="h", color="Sales", title="Best-Selling Products")
-st.plotly_chart(fig_bar, use_container_width=True)
+    # ---- Top Products Chart ----
+    st.subheader("Top 10 Products by Sales")
+    top_products = df_filtered.groupby("Product Name")["Sales"].sum().reset_index().nlargest(10, "Sales")
+    fig_bar = px.bar(top_products, x="Sales", y="Product Name", orientation="h", color="Sales", title="Best-Selling Products")
+    st.plotly_chart(fig_bar, use_container_width=True)
+
+elif page == "📈 Performance Analytics":
+    st.title("📈 Performance Analytics")
+    st.subheader("Sales Performance by Region")
+    sales_by_region = df_filtered.groupby("Region")["Sales"].sum().reset_index()
+    fig_region = px.bar(sales_by_region, x="Region", y="Sales", title="Sales by Region", color="Sales")
+    st.plotly_chart(fig_region, use_container_width=True)
+
+    st.subheader("Profitability by State")
+    profit_by_state = df_filtered.groupby("State")["Profit"].sum().reset_index()
+    fig_state = px.bar(profit_by_state, x="State", y="Profit", title="Profit by State", color="Profit")
+    st.plotly_chart(fig_state, use_container_width=True)
 
 # ---- Data Export ----
 if not df_filtered.empty:
